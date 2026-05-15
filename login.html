@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Iniciar Sesión | Sistema de Cronogramas</title>
+    
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2A6DFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cronogramas">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* ========================================
+           ESTILO PROFESIONAL - COMPATIBLE CON PWA Y MÓVIL
+        ======================================== */
+        
+        :root {
+            --primary-color: #2A6DFF;
+            --primary-dark: #1E4FB4;
+            --primary-light: #E8F0FF;
+            --secondary-color: #00C9A7;
+            --gray-100: #F9FAFB;
+            --gray-200: #F0F2F5;
+            --gray-300: #E4E7EB;
+            --gray-500: #6C757D;
+            --gray-700: #495057;
+            --gray-800: #2C3E50;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            --border-radius: 24px;
+            --border-radius-sm: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Fondo decorativo */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path fill="rgba(255,255,255,0.03)" d="M0 0h200v200H0z"/><circle cx="50" cy="50" r="30" fill="rgba(255,255,255,0.05)"/><circle cx="150" cy="150" r="40" fill="rgba(255,255,255,0.05)"/><circle cx="100" cy="100" r="20" fill="rgba(255,255,255,0.03)"/></svg>');
+            background-repeat: repeat;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Contenedor principal */
+        .login-container {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========================================
+           PANEL IZQUIERDO - INFORMACIÓN
+        ======================================== */
+        .login-info {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 40px 32px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-info::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-info h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .login-info p {
+            font-size: 13px;
+            line-height: 1.5;
+            opacity: 0.9;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .info-features {
+            list-style: none;
+            position: relative;
+        }
+
+        .info-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .info-features li:nth-child(1) { animation-delay: 0.1s; }
+        .info-features li:nth-child(2) { animation-delay: 0.2s; }
+        .info-features li:nth-child(3) { animation-delay: 0.3s; }
+        .info-features li:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .info-features li i {
+            width: 26px;
+            height: 26px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* ========================================
+           PANEL DERECHO - FORMULARIO
+        ======================================== */
+        .login-form {
+            flex: 1;
+            padding: 40px 36px;
+            background: white;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+        }
+
+        .logo-icon i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .logo h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        /* Formulario */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 12px;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 14px;
+            color: var(--gray-500);
+            font-size: 15px;
+            transition: color 0.3s ease;
+            z-index: 1;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 12px 12px 42px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: white;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(42, 109, 255, 0.1);
+        }
+
+        .input-group input:focus + i {
+            color: var(--primary-color);
+        }
+
+        /* Opciones adicionales */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: 11px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-500);
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .forgot-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .forgot-link:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Botón de ingreso */
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        /* Separador */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--gray-500);
+            font-size: 11px;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--gray-200);
+        }
+
+        .divider-text {
+            padding: 0 10px;
+        }
+
+        /* Demo credentials */
+        .demo-credentials {
+            background: var(--gray-100);
+            border-radius: var(--border-radius-sm);
+            padding: 10px 14px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .demo-credentials p {
+            font-size: 10px;
+            color: var(--gray-500);
+            margin-bottom: 5px;
+        }
+
+        .demo-credentials code {
+            background: white;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Mensaje de error */
+        .error-message {
+            background: #FEF2F2;
+            color: #DC2626;
+            padding: 10px;
+            border-radius: var(--border-radius-sm);
+            font-size: 11px;
+            margin-top: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        /* ========================================
+           RESPONSIVE PARA MÓVIL
+        ======================================== */
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .login-container {
+                flex-direction: column;
+                max-width: 420px;
+                margin: 0 auto;
+                border-radius: 20px;
+            }
+            
+            .login-info {
+                padding: 24px 20px;
+                text-align: center;
+                border-radius: 20px 20px 0 0;
+            }
+            
+            .login-info h2 {
+                font-size: 22px;
+            }
+            
+            .login-info p {
+                font-size: 12px;
+                margin-bottom: 16px;
+            }
+            
+            .info-features {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .info-features li {
+                margin-bottom: 0;
+                font-size: 11px;
+                background: rgba(255,255,255,0.15);
+                padding: 5px 12px;
+                border-radius: 30px;
+                width: auto;
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+            
+            .info-features li i {
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+            
+            .login-form {
+                padding: 28px 24px;
+                border-radius: 0 0 20px 20px;
+            }
+            
+            .logo {
+                margin-bottom: 24px;
+            }
+            
+            .logo-icon {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .logo-icon i {
+                font-size: 22px;
+            }
+            
+            .logo h3 {
+                font-size: 18px;
+            }
+            
+            .form-group {
+                margin-bottom: 16px;
+            }
+            
+            .input-group input {
+                padding: 11px 11px 11px 40px;
+                font-size: 13px;
+            }
+            
+            .btn-login {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .login-info {
+                padding: 20px 16px;
+            }
+            
+            .login-info h2 {
+                font-size: 20px;
+            }
+            
+            .login-form {
+                padding: 22px 18px;
+            }
+            
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .logo-icon i {
+                font-size: 20px;
+            }
+            
+            .logo h3 {
+                font-size: 17px;
+            }
+            
+            .demo-credentials code {
+                display: inline-block;
+                margin: 3px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .info-features li {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+            
+            .login-form {
+                padding: 18px 14px;
+            }
+        }
+
+        /* Para PWA en modo pantalla completa */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: calc(env(safe-area-inset-left) + 10px);
+                padding-right: calc(env(safe-area-inset-right) + 10px);
+            }
+        }
+        
+        /* Mejoras táctiles */
+        button, .forgot-link, .remember-me {
+            touch-action: manipulation;
+        }
+        
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <!-- Panel Izquierdo - Info (en móvil se muestra arriba) -->
+    <div class="login-info">
+        <h2>Bienvenido</h2>
+        <p>Acceda a su panel de gestión de cronogramas para administrar proyectos, actividades y recursos.</p>
+        <ul class="info-features">
+            <li><i class="fa-solid fa-calendar-check"></i> Gestión de cronogramas</li>
+            <li><i class="fa-solid fa-project-diagram"></i> Administración de proyectos</li>
+            <li><i class="fa-solid fa-tasks"></i> Seguimiento de actividades</li>
+            <li><i class="fa-solid fa-chart-line"></i> Estadísticas y reportes</li>
+        </ul>
+    </div>
+    
+    <!-- Panel Derecho - Formulario -->
+    <div class="login-form">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fa-solid fa-calendar-alt"></i>
+            </div>
+            <h3>Sistema de Cronogramas</h3>
+            <p>Inicie sesión con sus credenciales</p>
+        </div>
+        
+        <form id="loginForm" onsubmit="event.preventDefault(); entrar();">
+            <div class="form-group">
+                <label>Usuario</label>
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="usuario" placeholder="Ingrese su usuario" autocomplete="username" autofocus>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Contraseña</label>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Ingrese su contraseña" autocomplete="current-password">
+                </div>
+            </div>
+            
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" id="recordar"> Recordarme
+                </label>
+                <a href="#" class="forgot-link" onclick="recuperarPassword(); return false;">¿Olvidó su contraseña?</a>
+            </div>
+            
+            <button type="button" class="btn-login" onclick="entrar()">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar
+            </button>
+        </form>
+    
+        <div id="errorMsg" class="error-message"></div>
+        
+        <div class="divider">
+            <div class="divider-line"></div>
+            <div class="divider-text">Demo</div>
+            <div class="divider-line"></div>
+        </div>
+        
+        <div class="demo-credentials">
+            <p>Usuario de prueba:</p>
+            <code>admin</code> / <code>1234</code>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<script>
+    // ========================================
+    // REGISTRAR SERVICE WORKER PARA PWA
+    // ========================================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('❌ Error al registrar Service Worker:', error);
+                });
+        });
+    }
+    
+    // ========================================
+    // FUNCIONES DE LOGIN
+    // ========================================
+    
+    // Recordar usuario (localStorage)
+    if (localStorage.getItem("recordarUsuario")) {
+        document.getElementById("usuario").value = localStorage.getItem("recordarUsuario");
+        document.getElementById("recordar").checked = true;
+    }
+    
+    async function entrar() {
+        const usuario = document.getElementById("usuario").value.trim();
+        const password = document.getElementById("password").value;
+        const errorDiv = document.getElementById("errorMsg");
+        
+        if (!usuario || !password) {
+            errorDiv.style.display = "block";
+            errorDiv.innerText = "Por favor, complete todos los campos";
+            
+            setTimeout(() => { errorDiv.style.display = "none"; }, 3000);
+            return;
+        }
+        
+        errorDiv.style.display = "none";
+        
+        // Mostrar loading en el botón
+        const btn = document.querySelector(".btn-login");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingresando...';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ usuario, password })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Guardar sesión
+                sessionStorage.setItem("logeado", "true");
+                sessionStorage.setItem("usuario_actual", usuario);
+                
+                // Guardar recordar usuario si está marcado
+                if (document.getElementById("recordar").checked) {
+                    localStorage.setItem("recordarUsuario", usuario);
+                } else {
+                    localStorage.removeItem("recordarUsuario");
+                }
+                
+                // Redirigir al dashboard
+                window.location.href = "dashboard.html";
+            } else {
+                errorDiv.style.display = "block";
+                errorDiv.innerText = data.message || "Usuario o contraseña incorrectos";
+                
+                // Animación de error en los inputs
+                document.querySelectorAll(".input-group input").forEach(input => {
+                    input.style.borderColor = "#DC2626";
+                    setTimeout(() => { input.style.borderColor = ""; }, 1000);
+                });
+                
+                setTimeout(() => { errorDiv.style.display = "none"; }, 3000);
+            }
+        } catch (err) {
+            errorDiv.style.display = "block";
+            errorDiv.innerText = "Error de conexión con el servidor. Verifique que el sistema esté ejecutándose.";
+            console.error("Error:", err);
+            setTimeout(() => { errorDiv.style.display = "none"; }, 3000);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+    
+    function recuperarPassword() {
+        Swal.fire({
+            title: 'Recuperar contraseña',
+            text: 'Contacte al administrador para restablecer su contraseña.',
+            icon: 'info',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#2A6DFF'
+        });
+    }
+    
+    // Permitir enviar con Enter
+    document.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            entrar();
+        }
+    });
+    
+    // Feedback táctil para móviles
+    const btnLogin = document.querySelector('.btn-login');
+    if (btnLogin) {
+        btnLogin.addEventListener('touchstart', function() {
+            this.style.opacity = '0.8';
+        });
+        btnLogin.addEventListener('touchend', function() {
+            this.style.opacity = '1';
+        });
+    }
+
+
+    // Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ Service Worker registrado:', registration.scope);
+            })
+            .catch(error => {
+                console.log('❌ Error al registrar Service Worker:', error);
+            });
+    });
+}
+</script>
+
+</body>
+</html>

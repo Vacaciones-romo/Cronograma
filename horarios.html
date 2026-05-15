@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Horarios Semanales | Sistema de Gestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2A6DFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cronogramas">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    
+    <style>
+        :root {
+            --primary-color: #2A6DFF;
+            --primary-dark: #1E4FB4;
+            --gray-200: #F0F2F5;
+            --gray-500: #6C757D;
+            --border-radius: 16px;
+            --border-radius-sm: 10px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-200);
+        }
+
+        /* Layout principal */
+        .wrapper { display: flex; width: 100%; min-height: 100vh; }
+        
+        /* Sidebar - versión desktop */
+        .sidebar {
+            width: 260px;
+            background: white;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            transition: left 0.3s ease;
+            z-index: 1000;
+        }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--gray-200); }
+        .sidebar-header h3 { font-size: 20px; font-weight: 700; color: var(--primary-color); }
+        .sidebar-nav { list-style: none; padding: 20px 0; }
+        .sidebar-nav li { margin-bottom: 8px; }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #6C757D;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .sidebar-nav li.active a, .sidebar-nav a:hover {
+            background: linear-gradient(90deg, rgba(42,109,255,0.08) 0%, rgba(42,109,255,0) 100%);
+            color: var(--primary-color);
+            border-right: 3px solid var(--primary-color);
+        }
+        
+        /* Main Content */
+        .main-content { flex: 1; padding: 24px 32px; }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .page-title h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+        .page-title p { font-size: 12px; color: var(--gray-500); }
+        .user-avatar {
+            width: 44px; height: 44px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* Cards */
+        .card-table {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: var(--primary-dark); }
+        
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 8px; color: var(--gray-500); font-size: 13px; }
+        td { padding: 12px 8px; border-top: 1px solid var(--gray-200); }
+        .btn-sm {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: none;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+        .btn-edit { background: #17a2b8; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-lunes { background: #E3F2FD; color: #1976D2; }
+        .badge-martes { background: #E8F5E9; color: #388E3C; }
+        .badge-miercoles { background: #FFF3E0; color: #F57C00; }
+        .badge-jueves { background: #FCE4EC; color: #C2185B; }
+        .badge-viernes { background: #EDE7F6; color: #512DA8; }
+        .badge-sabado { background: #E0F7FA; color: #0097A7; }
+        .badge-domingo { background: #FBE9E7; color: #D84315; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 90%;
+            padding: 25px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--gray-200);
+        }
+        .btn-cancel { background: var(--gray-200); border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; }
+        .btn-save { background: var(--primary-color); color: white; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; }
+        
+        /* Vista Semanal */
+        .horario-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+        .horario-card:last-child { margin-bottom: 0; }
+        
+        /* ========================================
+           MENÚ HAMBURGUESA PARA MÓVIL
+           ======================================== */
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* Responsive para móvil */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                width: 260px;
+                background: white;
+                overflow-y: auto;
+                z-index: 1000;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .main-content {
+                padding: 16px;
+                width: 100%;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                margin-top: 10px;
+                padding-left: 50px;
+            }
+            
+            .page-title h1 {
+                font-size: 20px;
+            }
+            
+            .card-table {
+                overflow-x: auto;
+            }
+            
+            table {
+                font-size: 11px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .btn-primary {
+                width: 100%;
+                text-align: center;
+            }
+        }
+        
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none; }
+            .menu-toggle, .sidebar-overlay, .sidebar { display: none; }
+            .main-content { padding: 0; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Botón de menú hamburguesa -->
+<button class="menu-toggle" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Overlay para cerrar menú -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Cronogramas</h3></div>
+        <ul class="sidebar-nav">
+            <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="cronogramas.html"><i class="fas fa-calendar-alt"></i> Cronogramas</a></li>
+            <li><a href="proyectos.html"><i class="fas fa-project-diagram"></i> Proyectos</a></li>
+            <li><a href="actividades.html"><i class="fas fa-tasks"></i> Actividades</a></li>
+            <li><a href="recursos.html"><i class="fas fa-users"></i> Recursos</a></li>
+            <li class="active"><a href="horarios.html"><i class="fas fa-clock"></i> Horarios</a></li>
+            <li><a href="#" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Salir</a></li>
+        </ul>
+    </aside>
+    
+    <main class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <h1>Horarios Semanales</h1>
+                <p>Gestión de horarios por persona y ubicación</p>
+            </div>
+            <div class="user-avatar">AD</div>
+        </div>
+        
+        <!-- Listado de Horarios -->
+        <div class="card-table">
+            <div class="card-header">
+                <h3><i class="fas fa-clock"></i> Listado de Horarios</h3>
+                <button class="btn-primary" onclick="abrirModalNuevo()">+ Nuevo Horario</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="tablaHorarios" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Persona</th>
+                            <th>Ubicación</th>
+                            <th>Día</th>
+                            <th>Hora Inicio</th>
+                            <th>Hora Fin</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHorarios"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Vista Semanal -->
+        <div class="card-table">
+            <div class="card-header">
+                <h3><i class="fas fa-calendar-week"></i> Vista Semanal</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <select id="filtroPersona" onchange="cargarVistaSemanal()" style="padding: 8px; border-radius: 8px;">
+                        <option value="">Todas las personas</option>
+                        <option value="Violeta">Violeta</option>
+                        <option value="Gonzalo">Gonzalo</option>
+                        <option value="Aldana">Aldana</option>
+                    </select>
+                    <select id="tipoExportacion" style="padding: 8px; border-radius: 8px;">
+                        <option value="todas">📋 Todas las personas</option>
+                        <option value="individual">👤 Solo persona seleccionada</option>
+                    </select>
+                    <button class="btn-primary" onclick="exportarPDF()" style="background: #dc3545;">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </button>
+                </div>
+            </div>
+            <div id="vistaSemanal" style="overflow-x: auto;"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Nuevo/Editar Horario -->
+<div id="modalHorario" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Nuevo Horario</h3>
+            <span onclick="cerrarModal()" style="cursor:pointer; font-size:24px;">&times;</span>
+        </div>
+        <input type="hidden" id="horarioId">
+        <div class="form-group">
+            <label>Persona *</label>
+            <select id="persona">
+                <option value="Violeta">Violeta</option>
+                <option value="Gonzalo">Gonzalo</option>
+                <option value="Otra">Otra</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Ubicación *</label>
+            <select id="ubicacion">
+                <option value="Farmacia">Farmacia</option>
+                <option value="Consultorio">Consultorio</option>
+                <option value="Laboratorio">Laboratorio</option>
+                <option value="Administración">Administración</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Día *</label>
+            <select id="dia_semana">
+                <option value="1">Lunes</option>
+                <option value="2">Martes</option>
+                <option value="3">Miércoles</option>
+                <option value="4">Jueves</option>
+                <option value="5">Viernes</option>
+                <option value="6">Sábado</option>
+                <option value="0">Domingo</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Hora Inicio *</label>
+            <input type="time" id="hora_inicio" value="09:00">
+        </div>
+        <div class="form-group">
+            <label>Hora Fin *</label>
+            <input type="time" id="hora_fin" value="17:00">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-save" onclick="guardarHorario()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dataTable;
+    
+    // Verificar sesión
+    if (sessionStorage.getItem("logeado") !== "true") window.location.href = "login.html";
+    
+    function cerrarSesion() { 
+        sessionStorage.clear(); 
+        window.location.href = 'login.html'; 
+    }
+    
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const coloresDia = ['badge-domingo', 'badge-lunes', 'badge-martes', 'badge-miercoles', 'badge-jueves', 'badge-viernes', 'badge-sabado'];
+    
+    // ========================================
+    // CRUD HORARIOS
+    // ========================================
+    
+    async function cargarHorarios() {
+        const res = await fetch('/api/horarios');
+        const horarios = await res.json();
+        const tbody = document.getElementById('listaHorarios');
+        tbody.innerHTML = '';
+        horarios.forEach(h => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${h.persona}</strong></td>
+                    <td>${h.ubicacion}</td>
+                    <td><span class="badge ${coloresDia[h.dia_semana]}">${dias[h.dia_semana]}</span></td>
+                    <td>${h.hora_inicio.substring(0,5)}</td>
+                    <td>${h.hora_fin.substring(0,5)}</td>
+                    <td><span class="badge ${h.activo ? 'badge-success' : 'badge-danger'}">${h.activo ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                        <button class="btn-sm btn-edit" onclick="editarHorario(${h.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-sm btn-delete" onclick="eliminarHorario(${h.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+        if (dataTable) dataTable.destroy();
+        dataTable = $('#tablaHorarios').DataTable({ 
+            language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }, 
+            order: [[2, 'asc']],
+            responsive: true
+        });
+        cargarVistaSemanal();
+    }
+    
+    // ========================================
+    // VISTA SEMANAL
+    // ========================================
+    
+    async function cargarVistaSemanal() {
+        const res = await fetch('/api/horarios');
+        let horarios = await res.json();
+        const filtroPersona = document.getElementById('filtroPersona').value;
+        if (filtroPersona) {
+            horarios = horarios.filter(h => h.persona === filtroPersona);
+        }
+        
+        const diasMostrar = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const ordenDias = [1, 2, 3, 4, 5, 6, 0];
+        
+        const porDia = {};
+        for (let i = 0; i < ordenDias.length; i++) {
+            porDia[i] = horarios.filter(h => h.dia_semana === ordenDias[i]);
+        }
+        
+        let maxHorarios = 0;
+        for (let i = 0; i < 7; i++) {
+            if (porDia[i] && porDia[i].length > maxHorarios) maxHorarios = porDia[i].length;
+        }
+        if (maxHorarios === 0) maxHorarios = 1;
+        
+        let html = `<table style="width:100%; background:white; border-radius:12px; border-collapse:collapse;">
+            <thead>
+                <tr style="background: #2A6DFF; color: white;">
+                    ${diasMostrar.map(dia => `<th style="padding: 10px; text-align: center; border: 1px solid #ddd;">${dia}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>`;
+        
+        for (let fila = 0; fila < maxHorarios; fila++) {
+            html += '<tr>';
+            for (let i = 0; i < 7; i++) {
+                html += '<td style="vertical-align: top; padding: 8px; border: 1px solid #ddd;">';
+                if (porDia[i] && porDia[i][fila]) {
+                    const h = porDia[i][fila];
+                    html += `
+                        <div class="horario-card">
+                            <div style="font-weight: 600; font-size: 12px;">${h.persona}</div>
+                            <div style="font-size: 10px; color: #666;">📍 ${h.ubicacion}</div>
+                            <div style="font-size: 9px; color: #666;">⏰ ${h.hora_inicio.substring(0,5)} - ${h.hora_fin.substring(0,5)}</div>
+                        </div>
+                    `;
+                } else if (fila === 0) {
+                    html += '<div style="text-align:center; color:#999; padding:10px;">—</div>';
+                }
+                html += '</td>';
+            }
+            html += '</tr>';
+        }
+        
+        html += `</tbody></table>`;
+        document.getElementById('vistaSemanal').innerHTML = html;
+    }
+    
+    // ========================================
+    // CRUD OPERACIONES
+    // ========================================
+    
+    function abrirModalNuevo() {
+        document.getElementById('modalTitulo').innerText = 'Nuevo Horario';
+        document.getElementById('horarioId').value = '';
+        document.getElementById('persona').value = 'Violeta';
+        document.getElementById('ubicacion').value = 'Farmacia';
+        document.getElementById('dia_semana').value = '1';
+        document.getElementById('hora_inicio').value = '09:00';
+        document.getElementById('hora_fin').value = '17:00';
+        document.getElementById('modalHorario').classList.add('show');
+    }
+    
+    async function editarHorario(id) {
+        const res = await fetch('/api/horarios');
+        const horarios = await res.json();
+        const h = horarios.find(h => h.id === id);
+        if (h) {
+            document.getElementById('modalTitulo').innerText = 'Editar Horario';
+            document.getElementById('horarioId').value = h.id;
+            document.getElementById('persona').value = h.persona;
+            document.getElementById('ubicacion').value = h.ubicacion;
+            document.getElementById('dia_semana').value = h.dia_semana;
+            document.getElementById('hora_inicio').value = h.hora_inicio.substring(0,5);
+            document.getElementById('hora_fin').value = h.hora_fin.substring(0,5);
+            document.getElementById('modalHorario').classList.add('show');
+        }
+    }
+    
+    async function guardarHorario() {
+        const id = document.getElementById('horarioId').value;
+        const datos = {
+            persona: document.getElementById('persona').value,
+            ubicacion: document.getElementById('ubicacion').value,
+            dia_semana: parseInt(document.getElementById('dia_semana').value),
+            hora_inicio: document.getElementById('hora_inicio').value,
+            hora_fin: document.getElementById('hora_fin').value
+        };
+        
+        if (!datos.persona || !datos.ubicacion || !datos.hora_inicio || !datos.hora_fin) {
+            Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
+            return;
+        }
+        
+        const url = id ? `/api/horarios/${id}` : '/api/horarios';
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+            cerrarModal();
+            cargarHorarios();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error });
+        }
+    }
+    
+    async function eliminarHorario(id) {
+        const result = await Swal.fire({ title: '¿Eliminar horario?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, eliminar' });
+        if (result.isConfirmed) {
+            await fetch(`/api/horarios/${id}`, { method: 'DELETE' });
+            cargarHorarios();
+        }
+    }
+    
+    function cerrarModal() { document.getElementById('modalHorario').classList.remove('show'); }
+    
+    // ========================================
+    // EXPORTAR PDF
+    // ========================================
+    
+async function exportarPDF() {
+    const tipoExportacion = document.getElementById('tipoExportacion').value;
+    const filtroPersona = document.getElementById('filtroPersona').value;
+    
+    Swal.fire({
+        title: 'Preparando documento...',
+        text: 'Por favor espere',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    try {
+        const res = await fetch('/api/horarios');
+        const todosHorarios = await res.json();
+        
+        const diasMostrar = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const fechaActual = new Date().toLocaleDateString('es-AR');
+        
+        let personasAMostrar = [];
+        if (tipoExportacion === 'individual' && filtroPersona) {
+            personasAMostrar = [filtroPersona];
+        } else {
+            personasAMostrar = [...new Set(todosHorarios.map(h => h.persona))];
+            if (personasAMostrar.length === 0) personasAMostrar = ['Sin horarios'];
+        }
+        
+        // Crear HTML completo para impresión
+        let htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Horarios Semanales</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    body {
+                        font-family: 'Inter', Arial, Helvetica, sans-serif;
+                        padding: 20px;
+                        background: white;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                            margin: 0;
+                        }
+                        .page-break {
+                            page-break-after: always;
+                        }
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 20px;
+                        padding-bottom: 10px;
+                        border-bottom: 3px solid #2A6DFF;
+                    }
+                    .header h1 {
+                        color: #2A6DFF;
+                        font-size: 22px;
+                        margin-bottom: 5px;
+                    }
+                    .header p {
+                        color: #6C757D;
+                        font-size: 11px;
+                    }
+                    .persona-titulo {
+                        background: #2A6DFF;
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 8px;
+                        margin: 15px 0 10px 0;
+                        font-weight: bold;
+                        font-size: 16px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }
+                    th {
+                        background: #f0f2f5;
+                        padding: 8px;
+                        border: 1px solid #dee2e6;
+                        text-align: center;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+                    td {
+                        border: 1px solid #dee2e6;
+                        padding: 8px;
+                        vertical-align: top;
+                    }
+                    .horario-card {
+                        background: #f8f9fa;
+                        border-radius: 6px;
+                        padding: 6px 8px;
+                        margin-bottom: 5px;
+                        border-left: 3px solid #2A6DFF;
+                    }
+                    .horario-card:last-child {
+                        margin-bottom: 0;
+                    }
+                    .horario-ubicacion {
+                        font-size: 11px;
+                        font-weight: bold;
+                        color: #2A6DFF;
+                    }
+                    .horario-hora {
+                        font-size: 10px;
+                        color: #6C757D;
+                    }
+                    .empty-cell {
+                        text-align: center;
+                        color: #adb5bd;
+                        font-size: 11px;
+                        padding: 20px 0;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 20px;
+                        padding-top: 10px;
+                        font-size: 9px;
+                        color: #adb5bd;
+                        border-top: 1px solid #dee2e6;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>📅 Horarios Semanales</h1>
+                    <p>Generado el ${fechaActual}</p>
+                </div>
+        `;
+        
+        const ordenTabla = [1, 2, 3, 4, 5, 6, 0];
+        
+        for (const persona of personasAMostrar) {
+            const horariosPersona = todosHorarios.filter(h => h.persona === persona);
+            
+            const horariosPorColumna = [];
+            for (let i = 0; i < 7; i++) {
+                const diaSemana = ordenTabla[i];
+                horariosPorColumna[i] = horariosPersona.filter(h => h.dia_semana === diaSemana);
+            }
+            
+            let maxHorarios = 0;
+            for (let i = 0; i < 7; i++) {
+                if (horariosPorColumna[i].length > maxHorarios) maxHorarios = horariosPorColumna[i].length;
+            }
+            if (maxHorarios === 0) maxHorarios = 1;
+            
+            htmlContent += `<div class="persona-titulo">👤 ${persona}</div>`;
+            htmlContent += `<table>`;
+            htmlContent += `<thead><tr>`;
+            for (let i = 0; i < diasMostrar.length; i++) {
+                htmlContent += `<th>${diasMostrar[i]}</th>`;
+            }
+            htmlContent += `</tr></thead><tbody>`;
+            
+            for (let fila = 0; fila < maxHorarios; fila++) {
+                htmlContent += `<tr>`;
+                for (let col = 0; col < 7; col++) {
+                    htmlContent += `<td>`;
+                    if (horariosPorColumna[col] && horariosPorColumna[col][fila]) {
+                        const h = horariosPorColumna[col][fila];
+                        htmlContent += `
+                            <div class="horario-card">
+                                <div class="horario-ubicacion">📍 ${h.ubicacion}</div>
+                                <div class="horario-hora">⏰ ${h.hora_inicio.substring(0,5)} - ${h.hora_fin.substring(0,5)}</div>
+                            </div>
+                        `;
+                    } else if (fila === 0) {
+                        htmlContent += `<div class="empty-cell">—</div>`;
+                    }
+                    htmlContent += `</td>`;
+                }
+                htmlContent += `</tr>`;
+            }
+            htmlContent += `</tbody></table>`;
+        }
+        
+        htmlContent += `
+                <div class="footer">
+                    <p>Sistema de Cronogramas</p>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        Swal.close();
+        
+        // Abrir en nueva ventana y mostrar diálogo de impresión
+        const ventana = window.open('', '_blank');
+        ventana.document.write(htmlContent);
+        ventana.document.close();
+        
+        // Esperar a que cargue y mostrar impresión
+        ventana.onload = function() {
+            setTimeout(() => {
+                ventana.print();
+            }, 500);
+        };
+        
+    } catch (err) {
+        console.error('Error:', err);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el documento: ' + err.message
+        });
+    }
+}
+    
+    // ========================================
+    // MENÚ HAMBURGUESA
+    // ========================================
+    
+    function toggleMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    document.getElementById('sidebarOverlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        this.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+    
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    });
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarHorarios();
+    });
+
+// Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ Service Worker registrado:', registration.scope);
+            })
+            .catch(error => {
+                console.log('❌ Error al registrar Service Worker:', error);
+            });
+    });
+}
+
+</script>
+</body>
+</html>
